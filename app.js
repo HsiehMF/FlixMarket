@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const morgan = require('morgan')
 const mongoose = require('mongoose')
 var session = require('express-session')
+var passport = require('passport')
+var flash = require('connect-flash')
 
 const productRoutes = require('./api/routes/products')
 const indexRoutes = require('./api/routes/index')
@@ -12,10 +14,15 @@ app.use(morgan('dev'))
 
 mongoose.connect('mongodb://localhost:27017/shopping', {useNewUrlParser: true, useUnifiedTopology: true});
 
+
 app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 app.use(session({ secret: 'mysupersecret', resave: false, saveUninitialized: false }))
 
+app.use(flash())
+require('./config/passport')
+app.use(passport.initialize())
+app.use(passport.session())
 app.use('/public', express.static('./public'))
 app.use('/node_modules', express.static('./node_modules'))
 
