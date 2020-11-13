@@ -2,6 +2,7 @@ const express = require('express')
 const router = express.Router()
 const mongoose = require('mongoose')
 var Product = require('../models/product')
+var Cart = require('../models/cart')
 // var csrf = require('csurf')
 // const csrfProtection = csrf();
 // router.use(csrfProtection)
@@ -125,6 +126,23 @@ router.post('/user/signup', (req, res, next) => {
         return res.status(500).json({
             error: err
         })
+    })
+})
+
+router.get('/add-to-cart/:id', (req, res, next) => {
+    var productId = req.params.id
+    var cart = new Cart(req.session.cart ? req.session.cart : {} )   // new 購物車
+    console.log(req.session.cart)
+    Product.findById(productId, (err, product) => {
+        if (err) {
+            return res.status(500).json({
+                message: '新增錯誤'
+            })
+        }
+        cart.add(product, product.id)
+        req.session.cart = cart                 // 將處理後的購物車設置給 req.session
+        console.log(req.session.cart)
+        res.redirect('/')
     })
 })
 
