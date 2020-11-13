@@ -14,6 +14,8 @@ app.use(session({
 }))
 app.use(flash());
 
+require("dotenv").config();
+
 const productRoutes = require('./api/routes/products')
 const indexRoutes = require('./api/routes/index')
 
