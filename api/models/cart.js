@@ -23,6 +23,24 @@ module.exports = function Cart(oldCart) {
         }
         return arr
     }
+    /* 刪除單一產品 by one */
+    this.reduceByOne = function(id) {
+        this.items[id].qty--
+        this.items[id].price -= this.items[id].item.price
+        this.totalQty--
+        this.totalPrice -= this.items[id].item.price
+        
+        if (this.items[id].qty < 1) {	// 防止數量為零仍顯示，並有倒扣的危險性
+            delete this.items[id]
+        }
+    }
+
+    /* 刪除單一產品 all */
+    this.removeItem =function(id) {
+        this.totalQty -= this.items[id].qty
+        this.totalPrice -= this.items[id].price
+        delete this.items[id]
+    }
 }
 
 /* 參考範例 */

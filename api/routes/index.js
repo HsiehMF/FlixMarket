@@ -152,10 +152,10 @@ router.get('/add-to-cart/:id', (req, res, next) => {
 
 router.get('/shop', function(req, res, next) {
     if (!req.session.cart) {
-        return res.render('shop/shopping-cart', {products: null})
+        return res.render('shop/shopping-cart', {products: null, isLogin: req.session.user})
     }
     var cart = new Cart(req.session.cart)
-    res.render('shop/shopping-cart', {products: cart.generateArray(), totalPrice: cart.totalPrice})
+    res.render('shop/shopping-cart', {products: cart.generateArray(), totalPrice: cart.totalPrice, isLogin: req.session.user})
 })
 
 router.get('/shop/checkout', isLoggedIn, (req, res, next) => {
@@ -182,8 +182,22 @@ router.post('/shop/checkout', (req, res, next) => {
     })
 })
 
+router.get('/user/profile', isLoggedIn, (req, res, next) => {
+    Order.find({
+        user: req.session.userId
+    }, function(err, result) {
+        if (err) {
+            res.send('錯誤')
+        }
+        result.forEach(function(order) {
+            let cart = new Cart(order.cart)
+            order.items = cart.generateArray()
+        })
+        res.render('user/profile', {orders: result})
+    })
+})
+
 function isLoggedIn(req, res, next) {
-    
   if (req.session.user && req.session.userId) {      // token & userId is exist
     console.log('isLoggedIn')
     return next()
@@ -191,4 +205,27 @@ function isLoggedIn(req, res, next) {
   req.session.oldUrl = req.url
   res.redirect('/user/login')
 }
+
+/* 刪除單一產品 by one */
+router.get('/reduce/:id', (req, res, next) => {
+    var productId = req.params.id
+    console.log(productId)
+    var cart = new Cart(req.session.cart ? req.session.cart : {})
+    console.log(cart)
+    cart.reduceByOne(productId)
+    console.log(cart)
+    req.session.cart = cart
+    res.redirect('/shop')
+})
+  
+  /* 刪除單一產品 all */
+router.get('/remove/:id', (req, res, next) => {
+    var productId = req.params.id
+    console.log(productId)
+    var cart = new Cart(req.session.cart ? req.session.cart : {} )
+    cart.removeItem(productId)
+    req.session.cart = cart
+    res.redirect('/shop')
+})
+
 module.exports = router
