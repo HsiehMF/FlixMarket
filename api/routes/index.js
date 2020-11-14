@@ -3,6 +3,7 @@ const router = express.Router()
 const mongoose = require('mongoose')
 var Product = require('../models/product')
 var Cart = require('../models/cart')
+var Order = require('../models/order')
 // var csrf = require('csurf')
 // const csrfProtection = csrf();
 // router.use(csrfProtection)
@@ -10,6 +11,7 @@ var Cart = require('../models/cart')
 const bcrypt = require('bcrypt')
 const User = require('../models/user')
 const jwt = require('jsonwebtoken')
+const { session } = require('passport')
 
 /* 首頁 */
 router.get('/', (req, res, next) => {
@@ -17,7 +19,10 @@ router.get('/', (req, res, next) => {
     if (token.length > 0) {
         req.session.user = token 
     }
-    console.log(req.session.user)
+    if (req.session.userId) {
+        console.log('使用者_id: ', req.session.userId)
+        console.log('使用者 token: ', req.session.user)
+    }
     Product.find(function(err, docs) {
         res.render('index', {title: "NodeJs", products: docs, isLogin: req.session.user})
     })
@@ -55,12 +60,14 @@ router.post('/user/login', (req, res, next) => {
                         expiresIn: "12h"
                     }
                 )
-                // return res.status(200).json({
-                //     message: 'Auth successful',
-                //     token: token
-                // })
-                req.flash('token', token)       /*****一定有更好的做法，暫時沒有顧慮到安全性*****/
-                res.redirect('../')
+                req.flash('token', token)                /*****第一種做法，傳到flash，一定有更好的做法，暫時沒有顧慮到安全性*****/
+                req.session.userId = user[0]._id    /*****第二種做法，直接存到session*****/
+                if (req.session.oldUrl) {                    // 如果使用者是從別的頁面轉址過來的，登入成功轉回該頁面
+                    let oldUrl = req.session.oldUrl
+                    res.redirect(oldUrl)
+                } else {
+                    res.redirect('../')
+                }
             }
          })
     })
@@ -88,9 +95,6 @@ router.post('/user/signup', (req, res, next) => {
     .exec()
     .then(email => {
         if (email.length >= 1) {
-            //  res.status(409).json({ 
-            //     message: 'Mail existed!'        // 409 衝突, 422 請求未被處理
-            //  })
             req.flash('info', 'Mail existed!')
             res.redirect('signup')
         } else {
@@ -146,4 +150,45 @@ router.get('/add-to-cart/:id', (req, res, next) => {
     })
 })
 
+router.get('/shop', function(req, res, next) {
+    if (!req.session.cart) {
+        return res.render('shop/shopping-cart', {products: null})
+    }
+    var cart = new Cart(req.session.cart)
+    res.render('shop/shopping-cart', {products: cart.generateArray(), totalPrice: cart.totalPrice})
+})
+
+router.get('/shop/checkout', isLoggedIn, (req, res, next) => {
+    if (!req.session.cart) {
+        return res.redirect('/shop')    // 注意，redirect是轉路由而不是render網址，因此若沒有session是轉到/shop的GET路由
+    }
+    var cart = new Cart(req.session.cart)
+    res.render('shop/checkout', {total: cart.totalPrice})
+})
+
+router.post('/shop/checkout', (req, res, next) => {
+    console.log(req.body)
+    var cart = new Cart(req.session.cart)
+    var order = new Order({
+        user: req.session.userId,
+        cart: cart,
+        name: req.body.name,
+        address: req.body.address
+    })
+    order.save(function(err, result) {
+        req.flash('success', '訂單成立')
+        req.session.cart = null
+        res.redirect('/')
+    })
+})
+
+function isLoggedIn(req, res, next) {
+    
+  if (req.session.user && req.session.userId) {      // token & userId is exist
+    console.log('isLoggedIn')
+    return next()
+  }
+  req.session.oldUrl = req.url
+  res.redirect('/user/login')
+}
 module.exports = router
