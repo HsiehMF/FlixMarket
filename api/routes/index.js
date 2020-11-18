@@ -228,4 +228,10 @@ router.get('/remove/:id', (req, res, next) => {
     res.redirect('/shop')
 })
 
+router.get('/user/logout', (req, res, next) => {
+    req.session.user = null
+    req.session.userId = null
+    res.redirect('/')
+})
+
 module.exports = router

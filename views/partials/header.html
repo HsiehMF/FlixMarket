@@ -1,0 +1,44 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light py-3">
+  <a class="navbar-brand" href="/">
+      <!-- <img class="logo-img bg-light" src="../public/img/logo.png"> -->
+      <span class="pt-5 h4 ml-3">Flix Market</span>
+  </a>
+<div class="collapse navbar-collapse" id="navbarSupportedContent">
+  <ul class="navbar-nav ml-auto">
+    <li class="nav-item">
+      <a href="/shop" class="nav-link">
+        <i class="fa fa-shopping-cart mr-2" aria-hidden="true"></i>購物車
+        {{if session.cart }}
+        <span class="badge badge-dark">{{session.cart.totalQty}}</span>
+        {{/if}}
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="user/signup">註冊</a>
+    </li>
+    {{if !isLogin}}
+    <li class="nav-item">
+      <a class="nav-link" href="user/login">登入</a>
+    </li>
+    {{/if}}
+    {{if isLogin}}
+    <li class="nav-item dropdown">
+      <a class="nav-link dropdown-toggl" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        我的帳戶
+      </a>
+      <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+        <a class="dropdown-item" href="/user/profile">我的訂單</a>
+        <a class="dropdown-item" href="#">訊息</a>
+        <a class="dropdown-item" href="#">設定</a>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="/user/logout">登出</a>
+      </div>
+    </li>
+    {{/if}}
+  </ul>
+  <form class="form-inline my-2 my-lg-0 ml-2">
+    <input class="form-control mr-sm-2" type="search" placeholder="Search" aria-label="Search">
+    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">搜尋</button>
+  </form>
+</div>
+</nav>
